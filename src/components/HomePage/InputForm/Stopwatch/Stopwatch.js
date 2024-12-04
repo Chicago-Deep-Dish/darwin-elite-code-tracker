@@ -33,7 +33,7 @@ export default function Stopwatch({ times, setTimes }) {
     return () => {
       clearInterval(interval);
     };
-  }, [isActive, isPaused, setTimes]);
+  }, [isActive, isPaused, setTimes, custom]);
 
   const handleStart = () => {
     setIsActive(true);
@@ -50,6 +50,8 @@ export default function Stopwatch({ times, setTimes }) {
     setIsActive(false);
     setTime(0);
     setTimes(0);
+    setMinutes(0);
+    setHours(0);
   };
 
   const handleCustom = () => {
@@ -61,9 +63,10 @@ export default function Stopwatch({ times, setTimes }) {
     let milHours = hours * 3600000;
     let milMins = minutes * 60000;
     let milTime = milHours + milMins;
-    setTime(milTime);
     setCustom(false);
     setIsActive(true);
+    setTime(milTime);
+    setTimes(milTime);
   };
 
   const handleHourChange = (e) => {

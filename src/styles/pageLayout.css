@@ -19,6 +19,7 @@
 }
 
 .about {
+  position: relative;
   bottom: 0;
   top: 0;
   margin-top: 0;
@@ -31,7 +32,7 @@
       rgb(0, 0, 0)
     );
   background-size: 10%, auto;
-  opacity: 0.2, auto;
+  opacity: 0.5, auto;
 }
 
 .timeboxes {

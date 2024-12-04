@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 import Stack from "@mui/material/Stack";
@@ -15,31 +15,31 @@ import firebaseErrorCodes from "../../../helpers/firebaseErrorCodes";
 import useGlobalContext from "../../../context/GlobalContext";
 import Collapse from "@mui/material/Collapse";
 import styled from "styled-components";
+import Chip from "@mui/material/Chip";
 import { v4 as uuidv4 } from "uuid";
 
+
+
 const StyledInput = styled(TextField)`
-  width: 100%;
-  & .MuiOutlinedInput-notchedOutline {
-    border-color: #f3ab40;
-  }
-  & .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
-    border-color: white;
-    color: red;
-  }
-`;
+width: 100%;
+& .MuiOutlinedInput-notchedOutline {
+  border-color: #f3ab40;
+
+}
+& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: white;
+  color:red
+}`;
 
 export default function InputForm() {
-  const { toastifyTheme } = useGlobalContext();
 
-  const [times, setTimes] = useState(0);
+  const { toastifyTheme } =  useGlobalContext();
 
   const [values, setValues] = useState({
-    id: "",
     promptName: "",
     difficulty: "",
     promptLink: "",
-    promptText: "",
-    constraints: "",
+    promptText: '',
     timeComplexity: "",
     solution: "",
     programmingLanguage: "Javascript",
@@ -50,11 +50,35 @@ export default function InputForm() {
     topic: "",
   });
 
+  const [times, setTimes] = useState(0);
+
+  const [constraintVal, setConstraintVal] = useState(["press enter to add"]);
+
+  const [currConstraint, setCurrConstraint] = useState("");
+
   const [expand, setExpand] = useState(false);
 
   const toggleExpand = () => {
     setExpand((prev) => !prev);
   };
+
+  const handleKeyUp = (e) => {
+    if (e.keyCode === 13) {
+      setConstraintVal((oldState) => [...oldState, e.target.value]);
+      setCurrConstraint("");
+    }
+  };
+
+
+  const handleDelete = (item, index) => {
+    let arr = [...constraintVal];
+    arr.splice(index, 1);
+    setConstraintVal(arr)
+  }
+
+  const handleConChange = (e) => {
+    setCurrConstraint(e.target.value);
+  }
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -63,51 +87,54 @@ export default function InputForm() {
 
   const handleSubmit = (e, values) => {
     e.preventDefault();
-    axios
-      .post(
-        "/records",
-        {
-          ...values,
-          id: uuidv4(), //<< random
-          constraints: values.constraints.split(", "),
-          solution: values.solution.split(", "),
-          time: times,
-          timeStamp: new Date().toISOString(),
-          timeStampinfo: {
-            month: new Date().getMonth() + 1,
-            day: new Date().getDate(),
-            year: new Date().getFullYear(),
-          },
-        },
-        {
-          params: {
-            userID: sessionStorage.getItem("UserID"),
-          },
+    axios.post(
+      "/records",
+      {
+        ...values,
+        id: uuidv4(),
+        constraints: constraintVal,
+        solution: values.solution.split(", "),
+        time: times,
+        timeStamp: new Date().toISOString(),
+        timeStampinfo: {
+          month: new Date().getMonth() + 1,
+          day: new Date().getDate(),
+          year: new Date().getFullYear()
         }
-      )
+      },
+      {
+        params: {
+          userID: sessionStorage.getItem("UserID")
+        },
+      }
+    )
       .then(() => {
         setValues({
-          promptName: "",
-          difficulty: "",
-          promptLink: "",
-          promptText: "",
-          constraints: "",
-          timeComplexity: "",
-          solution: "",
-          programmingLanguage: "",
-          readTime: 0,
-          whiteBoardTime: 0,
-          pseudocodeTime: 0,
-          codeTime: 0,
-          topic: "",
-        });
+        promptName: "",
+        difficulty: "",
+        promptLink: "",
+        promptText: "",
+        timeComplexity: "",
+        solution: "",
+        programmingLanguage: "",
+        readTime: 0,
+        whiteBoardTime: 0,
+        pseudocodeTime: 0,
+        codeTime: 0,
+        topic: "",
+      })
         setTimes(0);
+        setConstraintVal(["press enter to add"]);
         toast.success("Data submitted successfully", toastifyTheme);
       })
       .catch((err) => {
         firebaseErrorCodes(err.response.data.code, toastifyTheme);
       });
   };
+
+  useEffect(() => {
+  }, [constraintVal]);
+
 
   let leetTopics = [
     "Arrays",
@@ -126,14 +153,13 @@ export default function InputForm() {
     "Dynamic Programming",
     "Trie",
     "Matrix",
-    "Sorting",
-  ];
+    "Sorting"
+    ];
 
   return (
     <Stack
-      className="beginning-inputs"
       sx={{ width: 200, mt: "10px", mx: "10px", minWidth: 18 }}
-    >
+     >
       <Stack
         sx={{
           width: 200,
@@ -148,25 +174,31 @@ export default function InputForm() {
         component={"form"}
         onSubmit={(e) => handleSubmit(e, values)}
       >
+
         <Typography variant="subtitle1">Begin your journey here!</Typography>
-        <StyledInput
-          size="small"
-          variant="outlined"
-          color="success"
-          required
-          type="text"
-          label="Prompt Name"
-          name="promptName"
-          value={values.promptName}
-          onChange={(e) => handleChange(e)}
-        />
 
         <FormControl variant="outlined" size="small" required>
           <StyledInput
+            size="small"
+            variant="outlined"
+            color="success"
+            required
+            type="text"
+            label="Prompt Name"
+            id="outlined-basic"
+            name="promptName"
+            value={values.promptName}
+            onChange={(e) => handleChange(e)}
+          />
+        </FormControl>
+
+        <FormControl variant="outlined" size="small" required>
+          <StyledInput
+            required
             select
             color="success"
-            labelid="difficulty-label"
-            label="Difficulty*"
+            labelId="difficulty-label"
+            label="Difficulty"
             name="difficulty"
             value={values.difficulty}
             variant="outlined"
@@ -178,12 +210,14 @@ export default function InputForm() {
             <MenuItem value="hard">Hard</MenuItem>
           </StyledInput>
         </FormControl>
-        <FormControl variant="outlined" size="small">
+
+        <FormControl variant="outlined" size="small" required>
           <StyledInput
+            required
             select
             color="success"
-            labelid="language-label"
-            label="Programmming Language*"
+            labelId="language-label"
+            label="Language"
             name="programmingLanguage"
             value={values.programmingLanguage}
             variant="outlined"
@@ -201,12 +235,14 @@ export default function InputForm() {
             <MenuItem value="PHP">PHP</MenuItem>
           </StyledInput>
         </FormControl>
-        <FormControl variant="outlined" size="small">
+
+        <FormControl variant="outlined" size="small" required >
           <StyledInput
+            required
             select
             color="success"
-            labelid="topic-label"
-            label="Topic*"
+            labelId="topic-label"
+            label="Topic"
             name="topic"
             value={values.topic}
             variant="outlined"
@@ -220,48 +256,62 @@ export default function InputForm() {
             ))}
           </StyledInput>
         </FormControl>
-        <Stopwatch times={times} setTimes={setTimes} />
 
-        <Collapse in={expand}>
-          <Stack spacing={1} sx={{ maxHeight: "25vh", overflowY: "auto" }}>
-            <Typography variant="subtitle1">Additional Fields</Typography>
+        <Stopwatch
+          times={times}
+          setTimes={setTimes}
+        />
+        <Collapse in={ expand } >
+          <Stack spacing={1} sx={{maxHeight: "25vh", overflowY: "auto"}}>
+            <Typography variant="subtitle1" >Additional Fields</Typography>
+            <FormControl variant="outlined" size="small">
+              <StyledInput
+                size="small"
+                variant="outlined"
+                color="success"
+                type="text"
+                label="Prompt Link"
+                id="outlined-basic"
+                name="promptLink"
+                value={values.promptLink}
+                onChange={(e) => handleChange(e)}
+              />
+            </FormControl>
 
-            <StyledInput
-              size="small"
-              variant="outlined"
-              color="success"
-              type="text"
-              label="Prompt Link"
-              name="promptLink"
-              value={values.promptLink}
-              onChange={(e) => handleChange(e)}
-            />
+            <FormControl variant="outlined" size="small">
+              <StyledInput
+                size="small"
+                variant="outlined"
+                color="success"
+                type="text"
+                multiline
+                rows={4}
+                label="Prompt Text"
+                name="promptText"
+                value={values.promptText}
+                onChange={(e) => handleChange(e)}
+              />
+            </FormControl>
 
-            <StyledInput
-              size="small"
-              variant="outlined"
-              color="success"
-              type="text"
-              multiline
-              rows={4}
-              label="Prompt Text"
-              name="promptText"
-              value={values.promptText}
-              onChange={(e) => handleChange(e)}
-            />
+            <FormControl variant="outlined">
+              <div style={{marginBottom: "5px"}}>
+                {constraintVal.map((item, index) => (
+                  <Chip key={item} size="small" onDelete={() => handleDelete(item, index)} label={item} />
+                ))}
+              </div>
+              <StyledInput
+                size="small"
+                variant="outlined"
+                color="success"
+                multiline
+                rows={4}
+                label="Constraints"
+                value={currConstraint}
+                onChange={handleConChange}
+                onKeyDown={handleKeyUp}
+              />
+            </FormControl>
 
-            <StyledInput
-              size="small"
-              variant="outlined"
-              color="success"
-              type="text"
-              multiline
-              rows={4}
-              label="Constraints"
-              name="constraints"
-              value={values.constraints}
-              onChange={(e) => handleChange(e)}
-            />
             <FormControl variant="outlined">
               <StyledInput
                 select
@@ -282,45 +332,49 @@ export default function InputForm() {
               </StyledInput>
             </FormControl>
 
-            <StyledInput
-              size="small"
-              variant="outlined"
-              color="success"
-              type="text"
-              multiline
-              rows={4}
-              label="Solution"
-              name="solution"
-              value={values.solution}
-              onChange={(e) => handleChange(e)}
-            />
+            <FormControl variant="outlined" size="small" >
+              <StyledInput
+                size="small"
+                variant="outlined"
+                color="success"
+                type="text"
+                multiline
+                rows={4}
+                label="Solution"
+                name="solution"
+                value={values.solution}
+                onChange={(e) => handleChange(e)}
+              />
+            </FormControl>
+
           </Stack>
         </Collapse>
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-          }}
-        >
-          <Button
-            sx={{ backgroundColor: "#f3ab40", marginRight: "1px" }}
-            variant="contained"
-            type="button"
-            size="medium"
-            onClick={(e) => toggleExpand(e)}
+
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between"
+            }}
           >
-            {expand ? <ArrowDropUp /> : <ArrowDropDown />}
-          </Button>
-          <Button
-            sx={{ backgroundColor: "#f3ab40", marginLeft: "1px" }}
-            variant="outlined"
-            type="submit"
-            size="medium"
-            onClick={(e) => handleSubmit(e, values)}
-          >
-            Submit
-          </Button>
-        </Box>
+           <Button
+            sx={{backgroundColor: "#f3ab40", color: "#597081", marginRight: "1px" }}
+              variant="contained"
+              type="button"
+              size="medium"
+              onClick={(e) => toggleExpand(e)}
+            >
+              { expand ? (<ArrowDropUp/>) : (<ArrowDropDown/>) }
+            </Button>
+            <Button
+              sx={{backgroundColor: "#f3ab40", marginLeft: "1px" }}
+              variant="outlined"
+              type="submit"
+              size="medium"
+              onClick={(e) => handleSubmit(e, values)}
+            >
+              Submit
+            </Button>
+          </Box>
       </Stack>
     </Stack>
   );
